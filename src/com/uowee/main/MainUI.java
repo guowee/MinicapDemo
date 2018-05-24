@@ -6,6 +6,7 @@ import com.uowee.constansts.ConnectModule;
 import com.uowee.constansts.ImageIconType;
 import com.uowee.device.ADB;
 import com.uowee.minicap.MiniCapUtil;
+import com.uowee.minitouch.MiniTouchUtil;
 import com.uowee.observer.AndroidConnectObserver;
 import com.uowee.observer.AndroidScreenObserver;
 import com.uowee.server.LogcatServer;
@@ -44,6 +45,7 @@ public class MainUI extends JFrame implements ActionListener, MouseListener, Mou
     private int height = 0;
 
     private IDevice device;
+    private MiniTouchUtil miniTouch;
     private boolean isDeviceFound = false;
     public static boolean isconnect = false;
     private PerformanceServer ps = null;
@@ -199,6 +201,8 @@ public class MainUI extends JFrame implements ActionListener, MouseListener, Mou
             screenImagePanel.setDevice(device);
             Thread.sleep(2000);
             screenImagePanel.startMiniCap();
+            Thread.sleep(2000);
+            screenImagePanel.startMiniTouch();
             startMonitor();
             isconnect = true;
 
@@ -275,11 +279,20 @@ public class MainUI extends JFrame implements ActionListener, MouseListener, Mou
     @Override
     public void mousePressed(MouseEvent e) {
 
+        if (e.getSource() == screenImagePanel) {
+            miniTouch.touchDown(new Point(e.getX(), e.getY()));
+        }
+
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-
+        if (!isconnect) {
+            return;
+        }
+        if (e.getSource() == screenImagePanel) {
+            miniTouch.touchUp();
+        }
     }
 
     @Override
@@ -299,7 +312,9 @@ public class MainUI extends JFrame implements ActionListener, MouseListener, Mou
      */
     @Override
     public void mouseDragged(MouseEvent e) {
-
+        if (e.getSource() == screenImagePanel) {
+            miniTouch.touchMove(new Point(e.getX(), e.getY()));
+        }
     }
 
     @Override
@@ -315,6 +330,7 @@ public class MainUI extends JFrame implements ActionListener, MouseListener, Mou
         private ImageIcon connecting = null;
         private IDevice device = null;
         private MiniCapUtil minicap = null;
+
 
         public ScreenImagePanel() {
             initImageIcon();
@@ -361,6 +377,14 @@ public class MainUI extends JFrame implements ActionListener, MouseListener, Mou
             minicap.startScreenListener();
         }
 
+        public void startMiniTouch() throws Exception {
+            miniTouch = new MiniTouchUtil(device, this.getWidth(), this.getHeight());
+            miniTouch.startMiniTouch();
+        }
+
+        public void changePointConvert(int widht, int height) {
+            miniTouch.changePointConvert(widht, height);
+        }
 
         @Override
         public void onDisConnect() {
